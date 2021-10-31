@@ -22,13 +22,14 @@
         <!-- /.card-header -->
 
         <div class="card-body p-0">
-            <table class="table table-hover table-responsive table-striped projects">
+            <table class="table table-hover table-responsive table-striped projects data-table">
                 <thead>
                 <tr>
                     <th style="width: 1%">#</th>
                     <th style="width: 30%">Link</th>
                     <th style="width: 12%">Code</th>
                     <th style="width: 12%">Short Link</th>
+                    <th style="width: 10%">Hits</th>
                     <th style="width: 5%">Created</th>
                     <th style="width: 20%">
                         <a class="btn btn-outline-primary m-auto d-flex text-center float-right"
@@ -62,46 +63,70 @@
                             </a>
                         </td>
                         <td>
-                            <a href="{{ route('dashboard.shorten.link',$link->code) }}" target="_blank">
-{{--                                {{ route('shorten.link', $link->code) }}--}}
+                            <a class="short-link" href="{{ route('dashboard.shorten.link',$link->code) }}"
+                               target="_blank">
+                                {{--  {{ route('shorten.link', $link->code) }}--}}
                                 {{ 'ar99/'.$link->short_link }}
                             </a>
                         </td>
-
+                        <td>
+                            <a id="total_hits" class="fa fa-clock text-cyan">
+                                {{ $link->total_hits }}
+                            </a>
+                        </td>
                         <td>
                             <a>
                                 {{ date('F d, Y', strtotime($link->created_at)) }}
                             </a>
                         </td>
                         <td class="project-actions text-right">
-                            <a class="btn btn-primary btn-sm"
-                               {{--href="{{ route('dashboard.links.show',$link->id) }}"--}}
-                               {{--OR--}}
+                            <a class="btn btn-primary btn-sm" style="padding-top: 6px;padding-bottom: 6px;"
                                href="{{ route('dashboard.links.show',['link' => $link->id]) }}"
                                data-toggle="tooltip" data-placement="top"
                                title="View link {{ $counter-1 }}">
                                 <i class="fas fa-external-link-alt"></i>
-                                View
                             </a>
-                            <a class="btn btn-info btn-sm"
+
+                            {{-- OR This with Label Text --}}
+                            {{--<a class="btn btn-primary btn-sm"--}}
+                            {{--   --}}{{--href="{{ route('dashboard.links.show',$link->id) }}"--}}
+                            {{--   --}}{{--OR--}}
+                            {{--   href="{{ route('dashboard.links.show',['link' => $link->id]) }}"--}}
+                            {{--   data-toggle="tooltip" data-placement="top"--}}
+                            {{--   title="View link {{ $counter-1 }}">--}}
+                            {{--    <i class="fas fa-external-link-alt"></i>--}}
+                            {{--    View--}}
+                            {{--</a>--}}
+
+                            <a class="btn btn-info btn-sm" style="padding-top: 6px;padding-bottom: 6px;"
                                href="{{ route('dashboard.links.edit',['link' => $link->id]) }}"
                                data-toggle="tooltip" data-placement="top"
                                title="Edit link {{ $counter-1 }}">
                                 <i class="fas fa-pencil-alt"></i>
-                                Edit
                             </a>
-                            <form class="btn btn-danger btn-sm m-0"
+                            {{-- OR This with Label Text --}}
+                            {{--<a class="btn btn-info btn-sm"--}}
+                            {{--   href="{{ route('dashboard.links.edit',['link' => $link->id]) }}"--}}
+                            {{--   data-toggle="tooltip" data-placement="top"--}}
+                            {{--   title="Edit link {{ $counter-1 }}">--}}
+                            {{--    <i class="fas fa-pencil-alt"></i>--}}
+                            {{--    Edit--}}
+                            {{--</a>--}}
+                            <form class="btn btn-danger btn-sm m-0 "
                                   action="{{ route('dashboard.links.destroy', ['link' => $link->id]) }}"
                                   method="POST">
                                 @csrf
                                 @method('DELETE')
                                 {{ csrf_field() }}
-                                <i class="fas fa-trash-alt">
-                                </i>
-                                <input name="delete" type="submit" class="btn btn-danger btn-sm p-0"
-                                       value="Delete"
-                                       data-toggle="tooltip" data-placement="top"
-                                       title="Delete link {{ $counter-1 }}">
+                                <button class="btn btn-sm text-white m-0 p-0" type="submit" data-toggle="tooltip"
+                                        data-placement="top"
+                                        title="Delete link {{ $counter-1 }}"><i class="fas fa-trash-alt"></i></button>
+                                {{-- OR This with Label Text --}}
+                                {{--<i class="fas fa-trash-alt"></i>--}}
+                                {{--<input name="delete" type="submit" class="btn btn-danger btn-sm p-0"--}}
+                                {{--       value="Delete"--}}
+                                {{--       data-toggle="tooltip" data-placement="top"--}}
+                                {{--       title="Delete link {{ $counter-1 }}">--}}
                             </form>
                         </td>
                     </tr>
@@ -121,4 +146,5 @@
             <!-- /.card-footer -->
 
         </div>
+    </div>
 @endsection

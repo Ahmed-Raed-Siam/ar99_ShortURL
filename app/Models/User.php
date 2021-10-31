@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -13,7 +14,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasTimestamps , SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, HasTimestamps, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -45,7 +46,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-        /**
+    /**
      * @return BelongsToMany
      */
     public function roles(): BelongsToMany
@@ -78,5 +79,22 @@ class User extends Authenticatable
         }
         return false;
     }
+
+    /**
+     * @return HasMany
+     */
+    public function links(): HasMany
+    {
+        return $this->hasMany(link::class, 'user_id','id');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function userLogs(): HasMany
+    {
+        return $this->hasMany(UserHits::class, 'user_id','id')->latest('visited_at');
+    }
+
 
 }

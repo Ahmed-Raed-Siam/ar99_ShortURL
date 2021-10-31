@@ -45,9 +45,9 @@
                     </a>
                 </li>
                 <!--Links-->
-                <li class="nav-item {{ \Illuminate\Support\Facades\Request::is('dashboard/links','dashboard/links') ? 'menu-is-opening menu-open' : '' }}">
+                <li class="nav-item {{ \Illuminate\Support\Facades\Request::is('dashboard/links','dashboard/links/create','dashboard/user/logs') ? 'menu-is-opening menu-open' : '' }}">
                     <a href="{{ route('dashboard.links.index') }}"
-                       class="nav-link {{ \Illuminate\Support\Facades\Request::is('dashboard/links','dashboard/links/create') ? 'active' : '' }}">
+                       class="nav-link {{ \Illuminate\Support\Facades\Request::is('dashboard/links','dashboard/links/create','dashboard/user/logs') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-building"></i>
                         <p>
                             Links
@@ -67,6 +67,13 @@
                                class="nav-link {{ \Illuminate\Support\Facades\Request::is('dashboard/links/create') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Add Links</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('dashboard.user.logs') }}"
+                               class="nav-link {{ \Illuminate\Support\Facades\Request::is('dashboard/user/logs') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>User Links Logs</p>
                             </a>
                         </li>
                     </ul>

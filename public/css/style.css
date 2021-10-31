@@ -3,3 +3,9 @@
         margin-top: 10px;
     }
 }
+
+.form:hover .custom-btn {
+    color: white;
+}
+
+/*}*/

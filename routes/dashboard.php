@@ -27,6 +27,8 @@ Route::name('dashboard.')->middleware(['auth'])->prefix('dashboard')->group(func
     Route::resource('users', UserController::class);
     Route::resource('roles', RoleController::class);
     Route::resource('links', LinkController::class);
+//    User_id , Visited page id , Hits ,ip , useragent
+    Route::get('user/logs', [LinkController::class, 'userLogs'])->name('user.logs');
+    Route::delete('user/logs/{user_id}', [LinkController::class, 'clearLogs'])->name('user.logs.destroy');
     Route::get('ar99/{code}', [LinkController::class, 'shortenLink'])->name('shorten.link');
-
 });
