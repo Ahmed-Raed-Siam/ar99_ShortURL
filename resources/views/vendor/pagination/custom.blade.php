@@ -58,4 +58,13 @@
             @endif
         </ul>
     </div>
+    <div class="dataTables_paginate paging_simple_numbers d-flex float-left">
+        <ul class="pagination d-flex align-items-center">
+            <li class="paginate_button page-item disabled">
+                <span class="text-sm">
+                    {{ 'total :'. $paginator->total() }}
+                </span>
+            </li>
+        </ul>
+    </div>
 @endif

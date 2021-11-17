@@ -63,9 +63,16 @@
                             </a>
                         </td>
                         <td>
+                            {{-- Private inside just inside the site --}}
+                            Private
                             <a class="short-link" href="{{ route('dashboard.shorten.link',$link->code) }}"
                                target="_blank">
-                                {{--  {{ route('shorten.link', $link->code) }}--}}
+                                {{ 'ar99/'.$link->short_link }}
+                            </a>
+                            <hr>Public
+                            {{-- OR Public --}}
+                            <a class="short-link" href="{{ route('shorten.link',$link->code) }}"
+                               target="_blank">
                                 {{ 'ar99/'.$link->short_link }}
                             </a>
                         </td>

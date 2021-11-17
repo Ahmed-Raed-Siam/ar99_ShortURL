@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\link;
 use App\Models\User;
 use App\Models\UserHits;
+use App\Models\VisitorHits;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -158,6 +159,101 @@ class LinkController extends Controller
      * @param Request $request
      * @return \Illuminate\Contracts\Foundation\Application|RedirectResponse|\Illuminate\Routing\Redirector
      */
+    public function public_shorten_link($code, Request $request)
+    {
+        $find = link::where('code', $code)->first();
+        /* Prepare data to insert in Visitor_hits table*/
+        $visitor_id = session()->getId();
+        $session = $request->getSession(true);
+        $session->put('hits', +1);
+        $visited_page_id = $find->id; //$request->getUri()
+        $hits = $session->get('hits');
+        $ip = $request->getClientIp();
+        $user_agent = $request->userAgent();
+        $visited_at = Carbon::now()->toString();
+        $logs_data = [
+            'visitor_id' => $visitor_id,
+            'visited_page_id' => $visited_page_id,
+            'hits' => $hits,
+            'ip' => $ip,
+            'user_agent' => $user_agent,
+            'visited_at' => $visited_at,
+        ];
+
+        // Save Data To visitor_hits Table
+        $visitor_hits_model = VisitorHits::create($logs_data);
+
+//        dd(
+//            $request,
+//            $request->userAgent(),
+//            $request->getUserInfo(),
+//            $request->getUser(),
+//            $request->ip(),
+//            $request->getClientIp(),
+//            $request->getSession(true),
+//            $visit_date,
+//            $request->getUri(),
+//            $find->link,
+//            $logs_data,
+//            Session::all(),
+//            $session,
+//            $user_hits,
+//        );
+
+//        $user = User::findOrFail($find->user_id);
+
+//        $userLogs = $user->userLogs()
+//            ->with('user')
+//            ->latest()->get();
+
+//        $visitor_hits_links = $visitor_hits_model->links()->get();
+
+//        $user_hits = $user->userLogs()
+//            ->with('user')
+//            ->where('visited_page_id', '=', $visited_page_id)
+//            ->select('hits')
+//            ->latest()
+//            ->get()
+//            ->count();
+
+//        $visitor_hits_logs = $visitor_hits_model
+//            ->with('links')
+//            ->where('visited_page_id', '=', $visited_page_id)
+//            ->latest()
+//            ->get();
+
+        $visitor_hits = $visitor_hits_model
+            ->with('links')
+            ->where('visited_page_id', '=', $visited_page_id)
+            ->select('hits')
+            ->latest()
+            ->get()
+            ->count();
+
+        // Update total_hits Data on Links Table
+        $find->total_hits = $visitor_hits;
+        $find->save();
+
+//        dd(
+//            $visitor_hits_logs,
+//            $visitor_hits,
+//            $visitor_hits_links,
+//            $request,
+//            $find,
+//            $find->total_hits,
+//            $user,
+//            $userLogs,
+//            $user_hits,
+//        );
+
+        return redirect($find->link);
+    }
+
+    /**
+     * @param $code
+     * @param Request $request
+     * @return \Illuminate\Contracts\Foundation\Application|RedirectResponse|\Illuminate\Routing\Redirector
+     */
     public function shortenLink($code, Request $request)
     {
 //        $find = link::all()->where('code', $code)->first();
@@ -298,6 +394,11 @@ class LinkController extends Controller
             ->latest('visited_at')
             ->paginate(10);
 
+//        $visitor_hits = VisitorHits::with('links')
+//            ->Join('links', 'visitor_hits.visited_page_id', '=', 'links.id')
+//            ->latest('visited_at')
+//            ->paginate(10);
+
 //        dd(
 //            $userLogs,
 //            $userLogs->first(),
@@ -317,13 +418,13 @@ class LinkController extends Controller
 //            ->delete()
 //        ;
 
-        if ($user->userLogs()->exists() === false) {
+        if ($user->userLogs()->exists() === false && VisitorHits::with('links')->exists() === false) {
 
-            $userLogs = $user->userLogs()
-                ->with('user')
-                ->Join('links', 'user_hits.visited_page_id', '=', 'links.id')
-                ->latest('visited_at')
-                ->paginate(10);
+//            $userLogs = $user->userLogs()
+//                ->with('user')
+//                ->Join('links', 'user_hits.visited_page_id', '=', 'links.id')
+//                ->latest('visited_at')
+//                ->paginate(10);
             // Status for Clearing User Logs From The System!
             $alert_status = 'alert-warning';
             // Msg
@@ -357,7 +458,20 @@ class LinkController extends Controller
             ->latest('visited_at')
             ->update(['links.total_hits' => 0]);
 
-        $user->userLogs()->delete();
+        $visitor_hits = VisitorHits::with('links')
+            ->Join('links', 'visitor_hits.visited_page_id', '=', 'links.id')
+            ->latest()
+            ->update(['links.total_hits' => 0]);
+
+
+        if ($user->userLogs()->exists()) {
+            $user->userLogs()->delete();
+        }
+
+        if (VisitorHits::with('links')->exists()) {
+            VisitorHits::with('links')->delete();
+        }
+
 //        dd(
 //            $user,
 //            $userLogs,
