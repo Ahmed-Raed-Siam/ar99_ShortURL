@@ -30,6 +30,15 @@ class VisitorHits extends Model
      */
     public function links(): BelongsTo
     {
-        return $this->belongsTo(link::class,'visited_page_id')->withDefault();
+        return $this->belongsTo(link::class, 'visited_page_id')->withDefault();
     }
+
+    /**
+     * @return BelongsTo
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(UserHits::class, 'visited_page_id')->withDefault();
+    }
+
 }

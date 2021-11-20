@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use function Sodium\increment;
@@ -28,9 +29,9 @@ class LinkController extends Controller
     {
         $user_id = Auth::id();
 //        $get_links = link::where('user_id', $user_id)->get();
-//        $links = link::with('user')->where('user_id', Auth::id())->paginate(10);
+        $links = link::with('user')->where('user_id', Auth::id())->paginate(10);
         /*OR This*/
-        $links = link::where('user_id', Auth::id())->paginate(10);
+//        $links = link::where('user_id', Auth::id())->paginate(10);
         /*OR This*/
 //        $links2 = link::with(array('user' => function ($query) use ($user_id) {
 //            $query->where('users.id', $user_id);
@@ -50,7 +51,7 @@ class LinkController extends Controller
      *
      * @return Response
      */
-    public function create()
+    public function create(): Response
     {
         return response()->view('dashboard.links.create');
     }
@@ -58,10 +59,10 @@ class LinkController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      * @return RedirectResponse
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         // Get all inputs from the form
         $input = $request->all();
@@ -118,7 +119,7 @@ class LinkController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      * @param int $id
      * @return Response
      */
@@ -133,7 +134,7 @@ class LinkController extends Controller
      * @param int $id
      * @return RedirectResponse
      */
-    public function destroy($id)
+    public function destroy(int $id): RedirectResponse
     {
         // Link ID
         $link = link::findOrFail($id);
@@ -165,9 +166,8 @@ class LinkController extends Controller
         /* Prepare data to insert in Visitor_hits table*/
         $visitor_id = session()->getId();
         $session = $request->getSession(true);
-        $session->put('hits', +1);
         $visited_page_id = $find->id; //$request->getUri()
-        $hits = $session->get('hits');
+        $hits = 1;
         $ip = $request->getClientIp();
         $user_agent = $request->userAgent();
         $visited_at = Carbon::now()->toString();
@@ -182,6 +182,7 @@ class LinkController extends Controller
 
         // Save Data To visitor_hits Table
         $visitor_hits_model = VisitorHits::create($logs_data);
+//        dd($visitor_hits_model);
 
 //        dd(
 //            $request,
@@ -231,7 +232,9 @@ class LinkController extends Controller
             ->count();
 
         // Update total_hits Data on Links Table
-        $find->total_hits = $visitor_hits;
+        $old_hits = $find->total_hits;
+//        $find->total_hits = $visitor_hits + $old_hits;
+        $find->total_hits = $old_hits + $hits;
         $find->save();
 
 //        dd(
@@ -261,11 +264,9 @@ class LinkController extends Controller
 
         $user = $request->user();
 
-        $session = $request->getSession(true);
-        $session->put('hits', +1);
         $user_id = $user->id;
         $visited_page_id = $find->id; //$request->getUri()
-        $hits = $session->get('hits');
+        $hits = 1;
         $ip = $request->getClientIp();
         $user_agent = $request->userAgent();
         $visited_at = Carbon::now()->toString();
@@ -342,19 +343,17 @@ class LinkController extends Controller
 ////            $user_hits->user()->first(),
 //        );
 
-        $userLogs = $user->userLogs()
-            ->with('user')
-            ->latest()
-            ->paginate(10);
+//        $get_all_2 = $user->userLogs()
+////            ->where('visited_page_id', '=', $visited_page_id)
+////            ->join('visitor_hits', 'user_hits.visited_page_id', '=', 'visitor_hits.visited_page_id')
+//            ->join('visitor_hits', function ($join) {
+//                $join->on('user_hits.visited_page_id', '=', 'visitor_hits.visited_page_id')
+//                    ->orderBy('visitor_hits.visited_at');
+//            })
+////            ->orderByDesc('user_hits.visited_at')
+//            ->get();
 
-        $user_hits = $user->userLogs()
-            ->with('user')
-            ->where('visited_page_id', '=', $visited_page_id)
-            ->select('hits')
-            ->latest()
-            ->get()
-            ->count();
-//
+        //
 //        $userLogs3 = $user->userLogs()
 //            ->with(
 //                ['userLogs' => function ($q) use ($visited_page_id) {
@@ -363,8 +362,45 @@ class LinkController extends Controller
 //            )
 //            ->get();
 
+
+//        $user_hits = $user->userLogs()
+//            ->where('visited_page_id', '=', $visited_page_id)
+//            ->select('hits')
+//            ->latest()
+//            ->count();
+//
+//        $visitor_hits = VisitorHits::with('links')
+//            ->where('visited_page_id', '=', $visited_page_id)
+//            ->select('hits')
+//            ->latest()
+//            ->count();
+
+        /* One Single Sql to get total Hits on the link */
+        $all_hits = VisitorHits::with('links')
+            ->join('user_hits', 'visitor_hits.visited_page_id', '=', 'user_hits.visited_page_id')
+            ->selectRaw('COUNT(DISTINCT user_hits.id) AS count_user_hits, COUNT(DISTINCT visitor_hits.id) AS count_visitor_hits')
+//            ->select(DB::raw('COUNT(DISTINCT user_hits.id) AS count_user_hits, COUNT(DISTINCT visitor_hits.id) AS count_visitor_hits'))
+            ->where('visitor_hits.visited_page_id', '=', $visited_page_id)
+            ->get();
+
+        // Get old link hits Value
+        $old_hits = $find->total_hits;
         // Update total_hits Data on Links Table
-        $find->total_hits = $user_hits;
+//        $find->total_hits = $user_hits + $visitor_hits;
+        /* Using on single sql*/
+        $total_user_hits = $all_hits->first()->count_user_hits;
+        $total_visitor_hits = $all_hits->first()->count_visitor_hits;
+        $find->total_hits = $total_user_hits + $total_visitor_hits;
+//        dd(
+//            $all_hits,
+//            $all_hits->first()->count_user_hits,
+//            $all_hits->first()->count_visitor_hits,
+////            $get_all_2,
+//            $user,
+//            $old_hits,
+//            $user_hits,
+//            $visitor_hits,
+//        );
         $find->save();
 
 //        dd(
@@ -425,6 +461,7 @@ class LinkController extends Controller
 //                ->Join('links', 'user_hits.visited_page_id', '=', 'links.id')
 //                ->latest('visited_at')
 //                ->paginate(10);
+
             // Status for Clearing User Logs From The System!
             $alert_status = 'alert-warning';
             // Msg

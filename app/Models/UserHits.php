@@ -43,5 +43,13 @@ class UserHits extends Model
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
+    /**
+     * @return BelongsTo
+     */
+    public function visitor(): BelongsTo
+    {
+        return $this->belongsTo(VisitorHits::class, 'visited_page_id')->withDefault();
+    }
+
 
 }
